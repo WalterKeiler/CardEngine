@@ -6,7 +6,8 @@
 *.ko
 *.obj
 *.elf
-
+.idea/
+cardEngine
 # Linker output
 *.ilk
 *.map
