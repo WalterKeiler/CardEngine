@@ -123,14 +123,12 @@ i32 CompareCardValue(i32 firstCardValue, i32 secondCardValue)
     return firstCardValue > secondCardValue;
 }
 
-void RunWar(struct CardPool cardPool)
+void RunWar(struct CardPool cardPool, struct Deck* decks)
 {
     i32 deck1Size = cardPool.size / 2;
     i32 deck2Size = cardPool.size / 2;
 
-    i32 maxTurns = 10000;
-
-    struct Deck* decks = SetupDecks(cardPool, 2, cardPool.size / 2);
+    i32 maxTurns = 1000;
 
     for (i32 i = 0; i < deck1Size; i++)
     {
@@ -147,39 +145,65 @@ void RunWar(struct CardPool cardPool)
     i32 win1 = 0;
     i32 win2 = 0;
 
+    i32 cardsWagered = 1;
+
     while (deck1Size > 0 && deck2Size > 0 && maxTurns > 0)
     {
         printf("Deck size 1: %i\n", deck1Size);
         printf("Deck size 2: %i\n", deck2Size);
 
-        i32 deck1Card = cardPool.cards[decks[0].cards[0]].value;
-        i32 deck2Card = cardPool.cards[decks[1].cards[0]].value;
+        i32 cardsWagered1 = cardsWagered;
+        i32 cardsWagered2 = cardsWagered;
 
-        printf("Deck 1 Card: %c", cardPool.cards[decks[0].cards[0]].rank);
-        printf("%c\n", cardPool.cards[decks[0].cards[0]].suit);
-        printf("Deck 2 Card: %c", cardPool.cards[decks[1].cards[0]].rank);
-        printf("%c\n\n", cardPool.cards[decks[1].cards[0]].suit);
+        if (cardsWagered > deck1Size)
+        {
+            cardsWagered = deck1Size - 1;
+        }
+        if (cardsWagered > deck2Size)
+        {
+            cardsWagered = deck2Size - 1;
+        }
+
+        i32 deck1Card = cardPool.cards[decks[0].cards[cardsWagered1 - 1]].value;
+        i32 deck2Card = cardPool.cards[decks[1].cards[cardsWagered2 - 1]].value;
+
+        printf("Deck 1 Card: %c", cardPool.cards[decks[0].cards[cardsWagered1 - 1]].rank);
+        printf("%c\n", cardPool.cards[decks[0].cards[cardsWagered1 - 1]].suit);
+        printf("Deck 2 Card: %c", cardPool.cards[decks[1].cards[cardsWagered2 - 1]].rank);
+        printf("%c\n\n", cardPool.cards[decks[1].cards[cardsWagered2 - 1]].suit);
 
         switch (CompareCardValue(deck1Card, deck2Card))
         {
             case -1:
-                decks[0].cards[deck1Size] = decks[0].cards[0];
-                decks[1].cards[deck2Size] = decks[1].cards[0];
+                //decks[0].cards[deck1Size] = decks[0].cards[0];
+                //decks[1].cards[deck2Size] = decks[1].cards[0];
                 tie++;
-                break;
+                cardsWagered += 2;
+                continue;
+                //break;
             case 0: // second deck card is larger
-                decks[1].cards[deck2Size + 0] = decks[1].cards[0];
-                decks[1].cards[deck2Size + 1] = decks[0].cards[0];
-                deck1Size--;
-                deck2Size++;
+                decks[1].cards[deck2Size] = decks[1].cards[0];
+                //printf("2 Wins Cards Won: %i\n\n", cardsWagered1);
+                for (i32 i = 0; i < cardsWagered1; i++)
+                {
+                    decks[1].cards[deck2Size + i + 1] = decks[0].cards[0 + i];
+                    deck1Size--;
+                    deck2Size++;
+                }
                 win2++;
+                cardsWagered = 1;
                 break;
             case 1: // first deck card is larger
-                decks[0].cards[deck1Size + 0] = decks[0].cards[0];
-                decks[0].cards[deck1Size + 1] = decks[1].cards[0];
-                deck1Size++;
-                deck2Size--;
+                decks[0].cards[deck1Size] = decks[0].cards[0];
+                //printf("1 Wins Cards Won: %i\n\n", cardsWagered2);
+                for (i32 i = 0; i < cardsWagered2; i++)
+                {
+                    decks[0].cards[deck1Size + i + 1] = decks[1].cards[0 + i];
+                    deck1Size++;
+                    deck2Size--;
+                }
                 win1++;
+                cardsWagered = 1;
                 break;
         }
 
@@ -229,8 +253,6 @@ void RunWar(struct CardPool cardPool)
         printf("Deck 1 Wins!");
     }
 
-
-    CleanUpDecks(decks, 2);
 }
 
 i32 main(i32 argc, char *argv[])
@@ -242,8 +264,9 @@ i32 main(i32 argc, char *argv[])
     i32 numOfSuits = 4;
 
     struct CardPool pool = BuildCardPool(numOfSuits * numOfValues,numOfSuits,numOfValues,suits,ranks,values);
+    struct Deck* decks = SetupDecks(pool, 2, pool.size / 2);
 
-    RunWar(pool);
+    RunWar(pool, decks);
 
     //printf("CardPool size: %d\n", pool.size);
     //printf("CardPool Card 1: %c\n", suits[3]);
@@ -252,5 +275,6 @@ i32 main(i32 argc, char *argv[])
     //    printf("%c", pool.cards[i].suit);
     //    printf("%c\n", pool.cards[i].rank);
     //}
+    CleanUpDecks(decks, 2);
     free(pool.cards);
 }
